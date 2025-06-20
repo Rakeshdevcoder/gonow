@@ -1,4 +1,3 @@
-// cmd/UpdateAccount.go
 package main
 
 import (
@@ -48,6 +47,10 @@ func (s *APIServer) handleUpdateAccount(w http.ResponseWriter, r *http.Request) 
 
 	if req.Balance != 0 {
 		account.Balance = req.Balance
+	}
+
+	if err := s.db.UpdateAccount(account); err != nil {
+		return err
 	}
 
 	return writeJSON(w, http.StatusOK, map[string]any{

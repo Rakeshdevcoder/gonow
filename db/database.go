@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"time"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 type Database struct {
@@ -11,7 +13,7 @@ type Database struct {
 }
 
 func NewDatabase(databasePath string) (*Database, error) {
-	db, err := sql.Open("sqlite", databasePath)
+	db, err := sql.Open("sqlite3", databasePath)
 
 	if err != nil {
 		return nil, err
@@ -34,5 +36,3 @@ func NewDatabase(databasePath string) (*Database, error) {
 func (d *Database) Close() error {
 	return d.DB.Close()
 }
-
-

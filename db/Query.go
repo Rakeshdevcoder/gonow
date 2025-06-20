@@ -25,7 +25,7 @@ func (d *Database) CreateAccountTable() error {
 func (d *Database) InsertAccount(account *models.Account) error {
 	query := `INSERT INTO accounts (id , firstname ,lastname , account_number,balance) VALUES (?,?,?,?,?)`
 
-	_, err := d.DB.Exec(query, account.ID, account.Firstname, account.Lastname, account.Balance)
+	_, err := d.DB.Exec(query, account.ID, account.Firstname, account.Lastname, account.AccountNumber, account.Balance)
 
 	if err != nil {
 		return err
@@ -33,8 +33,6 @@ func (d *Database) InsertAccount(account *models.Account) error {
 
 	return nil
 }
-
-//Get all Accounts
 
 func (d *Database) GetAllAccounts() (map[int]*models.Account, error) {
 	query := `SELECT id,firstname,lastname,account_number,balance FROM accounts`
@@ -63,7 +61,6 @@ func (d *Database) GetAllAccounts() (map[int]*models.Account, error) {
 	return accounts, nil
 }
 
-// get single account
 func (d *Database) GetAccountByID(id int) (*models.Account, error) {
 	query := `SELECT id , firstname , lastname , account_number , balance FROM accounts WHERE id=?`
 
@@ -78,11 +75,10 @@ func (d *Database) GetAccountByID(id int) (*models.Account, error) {
 	return account, nil
 }
 
-// update account
 func (d *Database) UpdateAccount(account *models.Account) error {
 	query := `UPDATE accounts SET firstname = ?,lastname = ?,balance =? WHERE id =?`
 
-	_, err := d.DB.Exec(query, account.Firstname, account.Firstname, account.Balance, account.ID)
+	_, err := d.DB.Exec(query, account.Firstname, account.Lastname, account.Balance, account.ID)
 
 	if err != nil {
 		return err
@@ -90,8 +86,6 @@ func (d *Database) UpdateAccount(account *models.Account) error {
 
 	return nil
 }
-
-//Delete account
 
 func (d *Database) DeleteAccount(id int) error {
 	query := `DELETE FROM accounts WHERE id=?`

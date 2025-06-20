@@ -44,7 +44,7 @@ func (s *APIServer) Run() {
 
 func main() {
 
-	database, err := db.NewDatabase("./accounts.db")
+	database, err := db.NewDatabase("./db/accounts.db")
 	if err != nil {
 		log.Fatalf("Failed to connect to database:%s", err)
 	}
