@@ -1,4 +1,4 @@
-// cmd/models.go
+// cmd/models/models.go
 package models
 
 import "math/rand/v2"
