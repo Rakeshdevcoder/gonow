@@ -1,4 +1,4 @@
-// db/databse.go
+// db/database.go
 package db
 
 import (
@@ -6,15 +6,15 @@ import (
 	"database/sql"
 	"time"
 
-	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
 )
 
 type Database struct {
 	DB *sql.DB
 }
 
-func NewDatabase(databasePath string) (*Database, error) {
-	db, err := sql.Open("mysql", databasePath)
+func NewDatabase(databaseURL string) (*Database, error) {
+	db, err := sql.Open("postgres", databaseURL)
 
 	if err != nil {
 		return nil, err

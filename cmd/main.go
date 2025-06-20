@@ -3,7 +3,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -25,7 +24,6 @@ type APIError struct {
 
 type apiFunc func(http.ResponseWriter, *http.Request) error
 
-// Wrapper that converts apiFunc to http.HandlerFunc
 func makeHTTPHandleFunc(f apiFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := f(w, r); err != nil {
@@ -46,31 +44,24 @@ func (s *APIServer) Run() {
 }
 
 func main() {
-
 	err := godotenv.Load("./internal/.env")
 	if err != nil {
 		log.Fatalf(".env file not loaded %s", err)
 	}
 
-	dbhost := os.Getenv("DB_HOST")
-	dbuser := os.Getenv("DB_USER")
-	dbpass := os.Getenv("DB_PASSWORD")
-	dbname := os.Getenv("DB_NAME")
-	dbport := os.Getenv("DB_PORT")
+	serviceURI := os.Getenv("POSTGRES_DATABASE_URL")
 
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", dbuser, dbpass, dbhost, dbport, dbname)
-
-	database, err := db.NewDatabase(dsn)
+	database, err := db.NewDatabase(serviceURI)
 	if err != nil {
-		log.Fatalf("Failed to connect to database:%s", err)
+		log.Fatalf("Failed to connect to database: %s", err)
 	}
 	defer database.Close()
 
 	if err := database.CreateAccountTable(); err != nil {
-		log.Fatalf("Failed to create accounts table:%s", err)
+		log.Fatalf("Failed to create accounts table: %s", err)
 	}
 
-	log.Println("Database connection succesful")
+	log.Println("Database connection successful")
 
 	server := NewAPIServer(":9091", database)
 	server.Run()

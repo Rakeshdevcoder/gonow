@@ -7,11 +7,11 @@ import (
 
 func (d *Database) CreateAccountTable() error {
 	query := `CREATE TABLE IF NOT EXISTS accounts (
-	id INT AUTO_INCREMENT PRIMARY KEY,
+	id SERIAL PRIMARY KEY,
 	firstname VARCHAR(255) NOT NULL,
 	lastname VARCHAR(255) NOT NULL,
-	account_number INT NOT NULL,
-	balance INT DEFAULT 0,
+	account_number INTEGER NOT NULL,
+	balance INTEGER DEFAULT 0,
 	createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`
 
 	_, err := d.DB.Exec(query)
@@ -24,9 +24,9 @@ func (d *Database) CreateAccountTable() error {
 }
 
 func (d *Database) InsertAccount(account *models.Account) error {
-	query := `INSERT INTO accounts (id , firstname ,lastname , account_number,balance) VALUES (?,?,?,?,?)`
+	query := `INSERT INTO accounts (firstname, lastname, account_number, balance) VALUES ($1, $2, $3, $4) RETURNING id`
 
-	_, err := d.DB.Exec(query, account.ID, account.Firstname, account.Lastname, account.AccountNumber, account.Balance)
+	err := d.DB.QueryRow(query, account.Firstname, account.Lastname, account.AccountNumber, account.Balance).Scan(&account.ID)
 
 	if err != nil {
 		return err
@@ -36,7 +36,7 @@ func (d *Database) InsertAccount(account *models.Account) error {
 }
 
 func (d *Database) GetAllAccounts() (map[int]*models.Account, error) {
-	query := `SELECT id,firstname,lastname,account_number,balance FROM accounts`
+	query := `SELECT id, firstname, lastname, account_number, balance FROM accounts`
 
 	rows, err := d.DB.Query(query)
 
@@ -63,7 +63,7 @@ func (d *Database) GetAllAccounts() (map[int]*models.Account, error) {
 }
 
 func (d *Database) GetAccountByID(id int) (*models.Account, error) {
-	query := `SELECT id , firstname , lastname , account_number , balance FROM accounts WHERE id=?`
+	query := `SELECT id, firstname, lastname, account_number, balance FROM accounts WHERE id=$1`
 
 	account := &models.Account{}
 
@@ -77,7 +77,7 @@ func (d *Database) GetAccountByID(id int) (*models.Account, error) {
 }
 
 func (d *Database) UpdateAccount(account *models.Account) error {
-	query := `UPDATE accounts SET firstname = ?,lastname = ?,balance =? WHERE id =?`
+	query := `UPDATE accounts SET firstname = $1, lastname = $2, balance = $3 WHERE id = $4`
 
 	_, err := d.DB.Exec(query, account.Firstname, account.Lastname, account.Balance, account.ID)
 
@@ -89,7 +89,7 @@ func (d *Database) UpdateAccount(account *models.Account) error {
 }
 
 func (d *Database) DeleteAccount(id int) error {
-	query := `DELETE FROM accounts WHERE id=?`
+	query := `DELETE FROM accounts WHERE id=$1`
 	_, err := d.DB.Exec(query, id)
 
 	if err != nil {

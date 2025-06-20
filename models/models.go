@@ -13,7 +13,6 @@ type Account struct {
 
 func NewAccount(firstname, lastname string) *Account {
 	return &Account{
-		ID:            rand.IntN(1000),
 		Firstname:     firstname,
 		Lastname:      lastname,
 		AccountNumber: rand.IntN(1000000),
