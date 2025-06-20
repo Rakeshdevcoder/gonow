@@ -6,7 +6,7 @@ import (
 	"database/sql"
 	"time"
 
-	_ "modernc.org/sqlite"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 type Database struct {
@@ -14,7 +14,7 @@ type Database struct {
 }
 
 func NewDatabase(databasePath string) (*Database, error) {
-	db, err := sql.Open("sqlite", databasePath)
+	db, err := sql.Open("mysql", databasePath)
 
 	if err != nil {
 		return nil, err

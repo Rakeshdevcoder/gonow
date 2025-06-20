@@ -7,12 +7,12 @@ import (
 
 func (d *Database) CreateAccountTable() error {
 	query := `CREATE TABLE IF NOT EXISTS accounts (
-	id INTEGER PRIMARY KEY AUTOINCREMENT,
-	firstname TEXT NOT NULL,
-	lastname TEXT NOT NULL,
-	account_number INTEGER NOT NULL,
-	balance INTEGER DEFAULT 0,
-	createdAt DATETIME DEFAULT CURRENT_TIMESTAMP)`
+	id INT AUTO_INCREMENT PRIMARY KEY,
+	firstname VARCHAR(255) NOT NULL,
+	lastname VARCHAR(255) NOT NULL,
+	account_number INT NOT NULL,
+	balance INT DEFAULT 0,
+	createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`
 
 	_, err := d.DB.Exec(query)
 

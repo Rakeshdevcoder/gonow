@@ -3,10 +3,13 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/gorilla/mux"
+	"github.com/joho/godotenv"
 	"github.com/rakeshrathoddev/gobank/db"
 )
 
@@ -44,7 +47,20 @@ func (s *APIServer) Run() {
 
 func main() {
 
-	database, err := db.NewDatabase("./db/accounts.db")
+	err := godotenv.Load("./internal/.env")
+	if err != nil {
+		log.Fatalf(".env file not loaded %s", err)
+	}
+
+	dbhost := os.Getenv("DB_HOST")
+	dbuser := os.Getenv("DB_USER")
+	dbpass := os.Getenv("DB_PASSWORD")
+	dbname := os.Getenv("DB_NAME")
+	dbport := os.Getenv("DB_PORT")
+
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", dbuser, dbpass, dbhost, dbport, dbname)
+
+	database, err := db.NewDatabase(dsn)
 	if err != nil {
 		log.Fatalf("Failed to connect to database:%s", err)
 	}
