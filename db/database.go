@@ -3,37 +3,40 @@ package db
 
 import (
 	"context"
-	"database/sql"
 	"time"
 
-	_ "github.com/lib/pq"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type Database struct {
-	DB *sql.DB
+	Client   *mongo.Client
+	Database *mongo.Database
 }
 
 func NewDatabase(databaseURL string) (*Database, error) {
-	db, err := sql.Open("postgres", databaseURL)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(databaseURL))
 	if err != nil {
 		return nil, err
 	}
 
-	db.SetMaxOpenConns(20)
-	db.SetMaxIdleConns(20)
-	db.SetConnMaxIdleTime(15 * time.Minute)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	if err := db.PingContext(ctx); err != nil {
+	if err := client.Ping(ctx, nil); err != nil {
 		return nil, err
 	}
 
-	return &Database{DB: db}, nil
+	database := client.Database("gobank")
+
+	return &Database{
+		Client:   client,
+		Database: database,
+	}, nil
 }
 
 func (d *Database) Close() error {
-	return d.DB.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	return d.Client.Disconnect(ctx)
 }

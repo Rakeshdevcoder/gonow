@@ -49,7 +49,7 @@ func main() {
 		log.Fatalf(".env file not loaded %s", err)
 	}
 
-	serviceURI := os.Getenv("POSTGRES_DATABASE_URL")
+	serviceURI := os.Getenv("MONGODB_URL")
 
 	database, err := db.NewDatabase(serviceURI)
 	if err != nil {

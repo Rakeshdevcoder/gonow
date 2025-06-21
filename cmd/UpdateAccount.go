@@ -1,15 +1,20 @@
+// cmd/UpdateAccount.go
 package main
 
 import (
-	"database/sql"
 	"encoding/json"
 	"net/http"
 
-	"github.com/rakeshrathoddev/gobank/models"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func (s *APIServer) handleUpdateAccount(w http.ResponseWriter, r *http.Request) error {
-	var req models.Account
+	var req struct {
+		ID        string `json:"id"`
+		Firstname string `json:"firstname"`
+		Lastname  string `json:"lastname"`
+		Balance   int    `json:"balance"`
+	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return writeJSON(w, http.StatusBadRequest, map[string]any{
@@ -18,7 +23,7 @@ func (s *APIServer) handleUpdateAccount(w http.ResponseWriter, r *http.Request) 
 		})
 	}
 
-	if req.ID == 0 {
+	if req.ID == "" {
 		return writeJSON(w, http.StatusBadRequest, map[string]any{
 			"message":    "Account ID is required",
 			"statusCode": http.StatusBadRequest,
@@ -27,13 +32,12 @@ func (s *APIServer) handleUpdateAccount(w http.ResponseWriter, r *http.Request) 
 
 	account, err := s.db.GetAccountByID(req.ID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == mongo.ErrNoDocuments {
 			return writeJSON(w, http.StatusNotFound, map[string]any{
 				"message":    "Account not found",
 				"statusCode": http.StatusNotFound,
 			})
 		}
-
 		return err
 	}
 

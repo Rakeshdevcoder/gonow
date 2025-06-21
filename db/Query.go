@@ -2,99 +2,114 @@
 package db
 
 import (
+	"context"
+	"time"
+
 	"github.com/rakeshrathoddev/gobank/models"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func (d *Database) CreateAccountTable() error {
-	query := `CREATE TABLE IF NOT EXISTS accounts (
-	id SERIAL PRIMARY KEY,
-	firstname VARCHAR(255) NOT NULL,
-	lastname VARCHAR(255) NOT NULL,
-	account_number INTEGER NOT NULL,
-	balance INTEGER DEFAULT 0,
-	createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`
-
-	_, err := d.DB.Exec(query)
-
-	if err != nil {
-		return err
-	}
-
+	// MongoDB creates collections automatically, no need to create explicitly
 	return nil
 }
 
 func (d *Database) InsertAccount(account *models.Account) error {
-	query := `INSERT INTO accounts (firstname, lastname, account_number, balance) VALUES ($1, $2, $3, $4) RETURNING id`
+	collection := d.Database.Collection("accounts")
 
-	err := d.DB.QueryRow(query, account.Firstname, account.Lastname, account.AccountNumber, account.Balance).Scan(&account.ID)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 
+	account.CreatedAt = time.Now()
+	result, err := collection.InsertOne(ctx, account)
 	if err != nil {
 		return err
 	}
 
+	account.ID = result.InsertedID.(primitive.ObjectID)
 	return nil
 }
 
-func (d *Database) GetAllAccounts() (map[int]*models.Account, error) {
-	query := `SELECT id, firstname, lastname, account_number, balance FROM accounts`
+func (d *Database) GetAllAccounts() (map[string]*models.Account, error) {
+	collection := d.Database.Collection("accounts")
 
-	rows, err := d.DB.Query(query)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 
+	cursor, err := collection.Find(ctx, bson.D{})
 	if err != nil {
 		return nil, err
 	}
+	defer cursor.Close(ctx)
 
-	defer rows.Close()
+	accounts := make(map[string]*models.Account)
 
-	accounts := make(map[int]*models.Account)
-
-	for rows.Next() {
-		account := &models.Account{}
-		err := rows.Scan(&account.ID, &account.Firstname, &account.Lastname, &account.AccountNumber, &account.Balance)
-
-		if err != nil {
+	for cursor.Next(ctx) {
+		var account models.Account
+		if err := cursor.Decode(&account); err != nil {
 			return nil, err
 		}
-
-		accounts[account.ID] = account
+		accounts[account.ID.Hex()] = &account
 	}
 
 	return accounts, nil
 }
 
-func (d *Database) GetAccountByID(id int) (*models.Account, error) {
-	query := `SELECT id, firstname, lastname, account_number, balance FROM accounts WHERE id=$1`
+func (d *Database) GetAccountByID(id string) (*models.Account, error) {
+	collection := d.Database.Collection("accounts")
 
-	account := &models.Account{}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 
-	err := d.DB.QueryRow(query, id).Scan(&account.ID, &account.Firstname, &account.Lastname, &account.AccountNumber, &account.Balance)
-
+	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, err
 	}
 
-	return account, nil
+	var account models.Account
+	err = collection.FindOne(ctx, bson.M{"_id": objectID}).Decode(&account)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, err
+		}
+		return nil, err
+	}
+
+	return &account, nil
 }
 
 func (d *Database) UpdateAccount(account *models.Account) error {
-	query := `UPDATE accounts SET firstname = $1, lastname = $2, balance = $3 WHERE id = $4`
+	collection := d.Database.Collection("accounts")
 
-	_, err := d.DB.Exec(query, account.Firstname, account.Lastname, account.Balance, account.ID)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 
-	if err != nil {
-		return err
+	update := bson.M{
+		"$set": bson.M{
+			"firstname": account.Firstname,
+			"lastname":  account.Lastname,
+			"balance":   account.Balance,
+			"updatedAt": time.Now(),
+		},
 	}
 
-	return nil
+	_, err := collection.UpdateOne(ctx, bson.M{"_id": account.ID}, update)
+	return err
 }
 
-func (d *Database) DeleteAccount(id int) error {
-	query := `DELETE FROM accounts WHERE id=$1`
-	_, err := d.DB.Exec(query, id)
+func (d *Database) DeleteAccount(id string) error {
+	collection := d.Database.Collection("accounts")
 
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return err
 	}
 
-	return nil
+	_, err = collection.DeleteOne(ctx, bson.M{"_id": objectID})
+	return err
 }

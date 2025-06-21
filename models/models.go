@@ -1,14 +1,20 @@
-// cmd/models/models.go
+// models/model.go
 package models
 
-import "math/rand/v2"
+import (
+	"math/rand/v2"
+	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
 
 type Account struct {
-	ID            int    `json:"id"`
-	Firstname     string `json:"firstname"`
-	Lastname      string `json:"lastname"`
-	AccountNumber int    `json:"accountNumber"`
-	Balance       int    `json:"balance"`
+	ID            primitive.ObjectID `json:"id" bson:"_id,omitempty"`
+	Firstname     string             `json:"firstname" bson:"firstname"`
+	Lastname      string             `json:"lastname" bson:"lastname"`
+	AccountNumber int                `json:"accountNumber" bson:"account_number"`
+	Balance       int                `json:"balance" bson:"balance"`
+	CreatedAt     time.Time          `json:"createdAt" bson:"createdAt"`
 }
 
 func NewAccount(firstname, lastname string) *Account {
@@ -16,5 +22,6 @@ func NewAccount(firstname, lastname string) *Account {
 		Firstname:     firstname,
 		Lastname:      lastname,
 		AccountNumber: rand.IntN(1000000),
+		Balance:       0,
 	}
 }

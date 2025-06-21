@@ -2,41 +2,32 @@
 package main
 
 import (
-	"database/sql"
 	"net/http"
-	"strconv"
 
 	"github.com/gorilla/mux"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func (s *APIServer) handleSingleAccount(w http.ResponseWriter, r *http.Request) error {
-
 	vars := mux.Vars(r)
-	idstr := vars["id"]
+	id := vars["id"]
 
-	if idstr == "" {
+	if id == "" {
 		return writeJSON(w, http.StatusBadRequest, map[string]any{
-			"message":    "Account id query parameter is required",
-			"statusCode": http.StatusBadRequest,
-		})
-	}
-
-	id, err := strconv.Atoi(idstr)
-	if err != nil {
-		return writeJSON(w, http.StatusBadRequest, map[string]any{
-			"message":    "Invalid account ID format",
+			"message":    "Account id parameter is required",
 			"statusCode": http.StatusBadRequest,
 		})
 	}
 
 	account, err := s.db.GetAccountByID(id)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == mongo.ErrNoDocuments {
 			return writeJSON(w, http.StatusNotFound, map[string]any{
 				"message":    "Account not found",
 				"statusCode": http.StatusNotFound,
 			})
 		}
+		return err
 	}
 
 	return writeJSON(w, http.StatusOK, map[string]any{
